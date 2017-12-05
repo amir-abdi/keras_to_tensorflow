@@ -3,7 +3,7 @@
 
 # # Set parameters
 
-# In[1]:
+# In[ ]:
 
 
 """
@@ -15,10 +15,10 @@ The following code snippet will convert the keras model file,
 which is saved using model.save('kerasmodel_weight_file'),
 to the freezed .pb tensorflow weight file which holds both the 
 network architecture and its associated weights.
-"""
+""";
 
 
-# In[2]:
+# In[ ]:
 
 
 # setting input arguments
@@ -26,26 +26,34 @@ import argparse
 parser = argparse.ArgumentParser(description='set input arguments')
 parser.add_argument('-input_fld', action="store", 
                     dest='input_fld', type=str, default='.')
+
 parser.add_argument('-output_fld', action="store", 
                     dest='output_fld', type=str, default='.')
+
 parser.add_argument('-input_model_file', action="store", 
                     dest='input_model_file', type=str, default='model.h5')
+
 parser.add_argument('-output_model_file', action="store", 
                     dest='output_model_file', type=str, default='model.pb')
+
 parser.add_argument('-output_graphdef_file', action="store", 
                     dest='output_graphdef_file', type=str, default='model.ascii')
+
 parser.add_argument('-num_outputs', action="store", 
                     dest='num_outputs', type=int, default=1)
+
 parser.add_argument('-graph_def', action="store", 
-                    dest='graph_def', type=bool, default=True)
+                    dest='graph_def', type=bool, default=False)
+
 parser.add_argument('-output_node_prefix', action="store", 
                     dest='output_node_prefix', type=str, default='output_node')
+
 parser.add_argument('-f')
 args = parser.parse_args()
 print('input args: ', args)
 
 
-# In[3]:
+# In[ ]:
 
 
 # uncomment the following lines to alter the default values set above
@@ -54,17 +62,16 @@ print('input args: ', args)
 # args.input_model_file = 'model.h5'
 # args.output_model_file = 'model.pb'
 
-#number of output streams from the network: this value has nothing to do with 
-#the number of classes, batch_size, etc., and it is mostly equal to 1. 
-#If you have a multi-stream network (forked network with multiple outputs), 
-#set the value to the 
-
+# num_output: this value has nothing to do with the number of classes, batch_size, etc., 
+# and it is mostly equal to 1. 
+# If you have a multi-stream network (forked network with multiple outputs), 
+# set the value to the number of outputs.
 num_output = args.num_outputs
 
 
 # # initialize
 
-# In[4]:
+# In[ ]:
 
 
 from keras.models import load_model
@@ -81,7 +88,7 @@ weight_file_path = osp.join(args.input_fld, args.input_model_file)
 
 # # Load keras model and rename output
 
-# In[5]:
+# In[ ]:
 
 
 K.set_learning_phase(0)
@@ -97,7 +104,7 @@ print('output nodes names are: ', pred_node_names)
 
 # #### [optional] write graph definition in ascii
 
-# In[6]:
+# In[ ]:
 
 
 sess = K.get_session()
@@ -110,7 +117,7 @@ if args.graph_def:
 
 # #### convert variables to constants and save
 
-# In[7]:
+# In[ ]:
 
 
 from tensorflow.python.framework import graph_util
