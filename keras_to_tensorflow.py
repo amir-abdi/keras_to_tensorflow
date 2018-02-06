@@ -26,48 +26,29 @@ import argparse
 parser = argparse.ArgumentParser(description='set input arguments')
 parser.add_argument('-input_fld', action="store", 
                     dest='input_fld', type=str, default='.')
-
 parser.add_argument('-output_fld', action="store", 
                     dest='output_fld', type=str, default='.')
-
 parser.add_argument('-input_model_file', action="store", 
                     dest='input_model_file', type=str, default='model.h5')
-
 parser.add_argument('-output_model_file', action="store", 
                     dest='output_model_file', type=str, default='model.pb')
-
 parser.add_argument('-output_graphdef_file', action="store", 
                     dest='output_graphdef_file', type=str, default='model.ascii')
-
 parser.add_argument('-num_outputs', action="store", 
                     dest='num_outputs', type=int, default=1)
-
 parser.add_argument('-graph_def', action="store", 
                     dest='graph_def', type=bool, default=False)
-
 parser.add_argument('-output_node_prefix', action="store", 
                     dest='output_node_prefix', type=str, default='output_node')
-
+parser.add_argument('-quantize', action="store", 
+                    dest='quantize', type=bool, default=False)
 parser.add_argument('-f')
 args = parser.parse_args()
 print('input args: ', args)
 
 
-# In[ ]:
-
-
-# uncomment the following lines to alter the default values set above
-# args.input_fld = '.'
-# args.output_fld = '.'
-# args.input_model_file = 'model.h5'
-# args.output_model_file = 'model.pb'
-
-# num_output: this value has nothing to do with the number of classes, batch_size, etc., 
-# and it is mostly equal to 1. 
-# If you have a multi-stream network (forked network with multiple outputs), 
-# set the value to the number of outputs.
-num_output = args.num_outputs
-
+# ### Regarding the `num_outputs` argument
+# ##### num_output: this value has nothing to do with the number of classes, batch_size, etc., and it is mostly equal to 1. If the network is a **multi-stream network** (forked network with multiple outputs), set the value to the number of outputs.
 
 # # initialize
 
@@ -93,7 +74,7 @@ weight_file_path = osp.join(args.input_fld, args.input_model_file)
 
 K.set_learning_phase(0)
 net_model = load_model(weight_file_path)
-
+num_output = args.num_outputs
 pred = [None]*num_output
 pred_node_names = [None]*num_output
 for i in range(num_output):
@@ -122,7 +103,13 @@ if args.graph_def:
 
 from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import graph_io
-constant_graph = graph_util.convert_variables_to_constants(sess, sess.graph.as_graph_def(), pred_node_names)
+from tensorflow.tools.graph_transforms import TransformGraph
+if args.quantize:
+    transforms = ["quantize_weights", "quantize_nodes"]
+    transformed_graph_def = TransformGraph(sess.graph.as_graph_def(), [], pred_node_names, transforms)
+    constant_graph = graph_util.convert_variables_to_constants(sess, transformed_graph_def, pred_node_names)
+else:
+    constant_graph = graph_util.convert_variables_to_constants(sess, sess.graph.as_graph_def(), pred_node_names)    
 graph_io.write_graph(constant_graph, output_fld, args.output_model_file, as_text=False)
 print('saved the freezed graph (ready for inference) at: ', osp.join(output_fld, args.output_model_file))
 
