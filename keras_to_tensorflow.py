@@ -9,7 +9,7 @@ The following code snippet will convert the keras model file,
 which is saved using model.save('kerasmodel_weight_file'),
 to the freezed .pb tensorflow weight file which holds both the 
 network architecture and its associated weights.
-""";
+"""
 
 
 '''
