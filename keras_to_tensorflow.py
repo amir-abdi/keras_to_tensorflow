@@ -1,10 +1,4 @@
-
 # coding: utf-8
-
-# # Set parameters
-
-# In[ ]:
-
 
 """
 Copyright (c) 2017, by the Authors: Amir H. Abdi
@@ -18,11 +12,41 @@ network architecture and its associated weights.
 """;
 
 
-# In[ ]:
+'''
+Input arguments:
+
+num_output: this value has nothing to do with the number of classes, batch_size, etc., 
+and it is mostly equal to 1. If the network is a **multi-stream network** 
+(forked network with multiple outputs), set the value to the number of outputs.
+
+quantize: if set to True, use the quantize feature of Tensorflow
+(https://www.tensorflow.org/performance/quantization) [default: False]
+
+use_theano: Thaeno and Tensorflow implement convolution in different ways.
+When using Keras with Theano backend, the order is set to 'channels_first'.
+This feature is not fully tested, and doesn't work with quantizization [default: False]
+
+input_fld: directory holding the keras weights file [default: .]
+
+output_fld: destination directory to save the tensorflow files [default: .]
+
+input_model_file: name of the input weight file [default: 'model.h5']
+
+output_model_file: name of the output weight file [default: args.input_model_file + '.pb']
+
+graph_def: if set to True, will write the graph definition as an ascii file [default: False]
+
+output_graphdef_file: if graph_def is set to True, the file name of the 
+graph definition [default: model.ascii]
+
+output_node_prefix: the prefix to use for output nodes. [default: output_node]
+
+'''
 
 
-# setting input arguments
+# Parse input arguments
 import argparse
+from pathlib import Path
 parser = argparse.ArgumentParser(description='set input arguments')
 parser.add_argument('-input_fld', action="store", 
                     dest='input_fld', type=str, default='.')
@@ -42,19 +66,20 @@ parser.add_argument('-output_node_prefix', action="store",
                     dest='output_node_prefix', type=str, default='output_node')
 parser.add_argument('-quantize', action="store", 
                     dest='quantize', type=bool, default=False)
+parser.add_argument('-theano_backend', action="store", 
+                    dest='theano_backend', type=bool, default=False)
 parser.add_argument('-f')
 args = parser.parse_args()
+parser.print_help()
 print('input args: ', args)
 
-
-# ### Regarding the `num_outputs` argument
-# ##### num_output: this value has nothing to do with the number of classes, batch_size, etc., and it is mostly equal to 1. If the network is a **multi-stream network** (forked network with multiple outputs), set the value to the number of outputs.
-
-# # initialize
-
-# In[ ]:
+if args.theano_backend is True and args.quantize is True:
+    raise ValueError("Quantize feature does not work with theano backend.")
+if args.input_model_file != 'model.h5':
+    args.output_model_file = str(Path(args.input_model_file).name) + '.pb'
 
 
+# initialize
 from keras.models import load_model
 import tensorflow as tf
 import os
@@ -67,13 +92,24 @@ if not os.path.isdir(output_fld):
 weight_file_path = osp.join(args.input_fld, args.input_model_file)
 
 
-# # Load keras model and rename output
-
-# In[ ]:
-
-
+# Load keras model and rename output
 K.set_learning_phase(0)
-net_model = load_model(weight_file_path)
+if args.theano_backend:
+    K.set_image_data_format('channels_first')
+else:
+    K.set_image_data_format('channels_last')
+
+try:
+    net_model = load_model(weight_file_path)
+except ValueError as err:
+    print('''Input file specified ({}) only holds the weights, and not the model defenition.
+    Save the model using mode.save(filename.h5) which will contain the network architecture
+    as well as its weights. 
+    If the model is saved using model.save_weights(filename.h5), the model architecture is 
+    expected to be saved separately in a json format and loaded prior to loading the weights.
+    Check the keras documentation for more details (https://keras.io/getting-started/faq/)'''
+          .format(weight_file_path))
+    raise err
 num_output = args.num_outputs
 pred = [None]*num_output
 pred_node_names = [None]*num_output
@@ -83,11 +119,7 @@ for i in range(num_output):
 print('output nodes names are: ', pred_node_names)
 
 
-# #### [optional] write graph definition in ascii
-
-# In[ ]:
-
-
+# [optional] write graph definition in ascii
 sess = K.get_session()
 
 if args.graph_def:
@@ -96,11 +128,7 @@ if args.graph_def:
     print('saved the graph definition in ascii format at: ', osp.join(output_fld, f))
 
 
-# #### convert variables to constants and save
-
-# In[ ]:
-
-
+# convert variables to constants and save
 from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import graph_io
 from tensorflow.tools.graph_transforms import TransformGraph
