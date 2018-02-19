@@ -70,7 +70,7 @@ parser.add_argument('-theano_backend', action="store",
                     dest='theano_backend', type=bool, default=False)
 parser.add_argument('-f')
 args = parser.parse_args()
-parser.print_help()
+
 print('input args: ', args)
 
 if args.theano_backend is True and args.quantize is True:
