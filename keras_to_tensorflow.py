@@ -75,7 +75,7 @@ print('input args: ', args)
 
 if args.theano_backend is True and args.quantize is True:
     raise ValueError("Quantize feature does not work with theano backend.")
-if args.input_model_file != 'model.h5':
+if args.input_model_file != 'model.h5' and args.output_model_file == 'model.pb':
     args.output_model_file = str(Path(args.input_model_file).name) + '.pb'
 
 
