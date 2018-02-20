@@ -8,7 +8,7 @@ The code on how to freeze and save keras models in previous versions of tensorfl
 ## How to use
 The keras model can be saved using `model.save('file_name.h5')` (check keras API documentation for details).
 
-You can either use the iPython notebook (`kears_to_tensorflow.ipnyb`), or simply run the python script as below in the folder where your keras model is present:
+You can either use the iPython notebook (`keras_to_tensorflow.ipnyb`), or simply run the python script as below in the folder where your keras model is present:
 
     python3 keras_to_tensorflow.py -input_model_file model.h5
     python keras_to_tensorflow.py -input_model_file model.h5 
