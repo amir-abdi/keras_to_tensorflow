@@ -1,4 +1,7 @@
+
 # coding: utf-8
+
+# In[ ]:
 
 """
 Copyright (c) 2017, by the Authors: Amir H. Abdi
@@ -9,8 +12,10 @@ The following code snippet will convert the keras model file,
 which is saved using model.save('kerasmodel_weight_file'),
 to the freezed .pb tensorflow weight file which holds both the 
 network architecture and its associated weights.
-"""
+""";
 
+
+# In[ ]:
 
 '''
 Input arguments:
@@ -45,17 +50,19 @@ output_node_prefix: the prefix to use for output nodes. [default: output_node]
 
 
 # Parse input arguments
+
+# In[ ]:
+
 import argparse
-from pathlib import Path
 parser = argparse.ArgumentParser(description='set input arguments')
 parser.add_argument('-input_fld', action="store", 
                     dest='input_fld', type=str, default='.')
 parser.add_argument('-output_fld', action="store", 
-                    dest='output_fld', type=str, default='.')
+                    dest='output_fld', type=str, default='')
 parser.add_argument('-input_model_file', action="store", 
                     dest='input_model_file', type=str, default='model.h5')
 parser.add_argument('-output_model_file', action="store", 
-                    dest='output_model_file', type=str, default='model.pb')
+                    dest='output_model_file', type=str, default='')
 parser.add_argument('-output_graphdef_file', action="store", 
                     dest='output_graphdef_file', type=str, default='model.ascii')
 parser.add_argument('-num_outputs', action="store", 
@@ -75,24 +82,28 @@ print('input args: ', args)
 
 if args.theano_backend is True and args.quantize is True:
     raise ValueError("Quantize feature does not work with theano backend.")
-if args.input_model_file != 'model.h5':
-    args.output_model_file = str(Path(args.input_model_file).name) + '.pb'
 
 
 # initialize
+
+# In[ ]:
+
 from keras.models import load_model
 import tensorflow as tf
-import os
-import os.path as osp
+from pathlib import Path
 from keras import backend as K
 
-output_fld =  args.output_fld
-if not os.path.isdir(output_fld):
-    os.mkdir(output_fld)
-weight_file_path = osp.join(args.input_fld, args.input_model_file)
+output_fld =  args.input_fld if args.output_fld == '' else args.output_fld
+if args.output_model_file == '':
+    args.output_model_file = str(Path(args.input_model_file).name) + '.pb'
+Path(output_fld).mkdir(parents=True, exist_ok=True)    
+weight_file_path = str(Path(args.input_fld) / args.input_model_file)
 
 
 # Load keras model and rename output
+
+# In[ ]:
+
 K.set_learning_phase(0)
 if args.theano_backend:
     K.set_image_data_format('channels_first')
@@ -120,15 +131,21 @@ print('output nodes names are: ', pred_node_names)
 
 
 # [optional] write graph definition in ascii
+
+# In[ ]:
+
 sess = K.get_session()
 
 if args.graph_def:
     f = args.output_graphdef_file 
     tf.train.write_graph(sess.graph.as_graph_def(), output_fld, f, as_text=True)
-    print('saved the graph definition in ascii format at: ', osp.join(output_fld, f))
+    print('saved the graph definition in ascii format at: ', str(Path(output_fld) / f))
 
 
 # convert variables to constants and save
+
+# In[ ]:
+
 from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import graph_io
 from tensorflow.tools.graph_transforms import TransformGraph
@@ -139,5 +156,5 @@ if args.quantize:
 else:
     constant_graph = graph_util.convert_variables_to_constants(sess, sess.graph.as_graph_def(), pred_node_names)    
 graph_io.write_graph(constant_graph, output_fld, args.output_model_file, as_text=False)
-print('saved the freezed graph (ready for inference) at: ', osp.join(output_fld, args.output_model_file))
+print('saved the freezed graph (ready for inference) at: ', str(Path(output_fld) / args.output_model_file))
 
