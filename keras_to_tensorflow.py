@@ -148,8 +148,8 @@ if args.graph_def:
 
 from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import graph_io
-from tensorflow.tools.graph_transforms import TransformGraph
 if args.quantize:
+    from tensorflow.tools.graph_transforms import TransformGraph
     transforms = ["quantize_weights", "quantize_nodes"]
     transformed_graph_def = TransformGraph(sess.graph.as_graph_def(), [], pred_node_names, transforms)
     constant_graph = graph_util.convert_variables_to_constants(sess, transformed_graph_def, pred_node_names)
