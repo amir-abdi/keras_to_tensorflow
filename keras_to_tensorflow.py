@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Copyright (c) 2018, by the Authors: Amir H. Abdi
 This script is freely available under the MIT Public License.
