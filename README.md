@@ -24,7 +24,7 @@ In this case, the model can be converted as follows:
 Try 
 
     python keras_to_tensorflow.py --help
-to learn about other supported flags (quantize, output_nodes_prefix, save_graph_def) and their description.
+to learn about other supported flags (quantize, output_nodes_prefix, save_graph_def).
 
 
 ## Dependencies
