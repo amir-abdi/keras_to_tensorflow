@@ -3,6 +3,8 @@
 *.hdf5
 *.json
 *.pb
+*.pbtxt
 *.yml
 *.ckpt
 .idea
+
