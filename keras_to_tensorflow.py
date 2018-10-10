@@ -24,9 +24,9 @@ K.set_learning_phase(0)
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string('input_model', None, 'Path to the input model.')
-flags.DEFINE_string('input_model_json', None, 'Path to the input model'
+flags.DEFINE_string('input_model_json', None, 'Path to the input model '
                                               'architecture in json format.')
-flags.DEFINE_string('output_model', None, 'Path where the converted model will'
+flags.DEFINE_string('output_model', None, 'Path where the converted model will '
                                           'be stored.')
 flags.DEFINE_boolean('save_graph_def', False,
                      'Whether to save the graphdef.pbtxt file which contains '
@@ -44,6 +44,10 @@ flags.DEFINE_boolean('channels_first', False,
                      'Whether channels are the first dimension of a tensor. '
                      'The default is TensorFlow behaviour where channels are '
                      'the last dimension.')
+flags.DEFINE_boolean('output_meta_ckpt', False,
+                     'If set to True, exports the model as .meta, .index, and '
+                     '.data files, with a checkpoint file. These can be later '
+                     'loaded in TensorFlow to continue training.')
 
 flags.mark_flag_as_required('input_model')
 flags.mark_flag_as_required('output_model')
@@ -87,14 +91,15 @@ def load_model(input_model_path, input_json_path):
 
 
 def main(args):
-    # If output_model path is relative, make it absolute
+    # If output_model path is relative and in cwd, make it absolute from root
     output_model = FLAGS.output_model
     if str(Path(output_model).parent) == '.':
         output_model = str((Path.cwd() / output_model))
 
     output_fld = Path(output_model).parent
-    output_model_pbtxt_name = Path(output_model).stem + '.pbtxt'
     output_model_name = Path(output_model).name
+    output_model_stem = Path(output_model).stem
+    output_model_pbtxt_name = output_model_stem + '.pbtxt'
 
     # Create output directory if it does not exist
     Path(output_model).parent.mkdir(parents=True, exist_ok=True)
@@ -125,6 +130,10 @@ def main(args):
                  str(converted_output_node_names))
 
     sess = K.get_session()
+    if FLAGS.output_meta_ckpt:
+        saver = tf.train.Saver()
+        saver.save(sess, str(output_fld / output_model_stem))
+
     if FLAGS.save_graph_def:
         tf.train.write_graph(sess.graph.as_graph_def(), str(output_fld),
                              output_model_pbtxt_name, as_text=True)
