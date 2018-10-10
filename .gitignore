@@ -1,1 +1,6 @@
 .ipynb_checkpoints
+*.h5
+*.pb
+*.yml
+*.ckpt
+.idea
