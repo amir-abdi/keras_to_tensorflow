@@ -1,7 +1,7 @@
 # Keras to TensorFlow
 The `keras_to_tensorflow.py` is a tool that converts a trained keras model into a ready-for-inference TensorFlow model.
 
-####Summary
+#### Summary
 - In the default behaviour, this tool **freezes** the nodes (converts all TF variables to TF constants), and saves the inference graph and weights into a binary protobuf (.pb) file. During freezing, TensorFlow also applies node pruning which removes nodes with no contribution to the output tensor.
 
 - This tool supports multiple output networks and enables the user to rename the output tensors via the `--output_nodes_prefix` flag.
