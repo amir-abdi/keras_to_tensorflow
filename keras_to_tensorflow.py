@@ -1,5 +1,5 @@
 """
-Copyright (c) 2017, by the Authors: Amir H. Abdi
+Copyright (c) 2018, by the Authors: Amir H. Abdi
 This script is freely available under the MIT Public License.
 Please see the License file in the root for details.
 
