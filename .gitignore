@@ -1,5 +1,7 @@
 .ipynb_checkpoints
 *.h5
+*.hdf5
+*.json
 *.pb
 *.yml
 *.ckpt
