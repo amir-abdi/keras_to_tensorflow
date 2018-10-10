@@ -28,10 +28,6 @@ flags.DEFINE_string('input_model_json', None, 'Path to the input model'
                                               'architecture in json format.')
 flags.DEFINE_string('output_model', None, 'Path where the converted model will'
                                           'be stored.')
-# flags.DEFINE_integer('num_output_nodes', 1,
-#                      'Number of outputs the network produces. Most networks '
-#                      'has only one output, while others can have a forked '
-#                      'architecture and produce multiple outputs.')
 flags.DEFINE_boolean('save_graph_def', False,
                      'Whether to save the graphdef.pbtxt file which contains '
                      'the graph definition in ASCII format.')
@@ -54,8 +50,6 @@ flags.mark_flag_as_required('output_model')
 
 
 def load_model(input_model_path, input_json_path):
-    model = None
-    # TODO(amirabdi): enable loading weights and json files separately
     try:
         model = keras.models.load_model(input_model_path)
         return model
@@ -106,8 +100,6 @@ def main(args):
     model = load_model(FLAGS.input_model, FLAGS.input_model_json)
 
     # TODO(amirabdi): Support networks with multiple inputs
-
-
     orig_output_node_names = [node.op.name for node in model.outputs]
     if FLAGS.output_nodes_prefix:
         num_output = len(orig_output_node_names)
