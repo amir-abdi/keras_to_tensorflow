@@ -1,15 +1,16 @@
 """
 Copyright (c) 2017, by the Authors: Amir H. Abdi
-This software is freely available under the MIT Public License. 
+This script is freely available under the MIT Public License.
 Please see the License file in the root for details.
 
-The following code snippet will convert the keras model file,
-which is saved using model.save('kerasmodel_weight_file'),
-to the freezed .pb tensorflow weight file which holds both the 
-network architecture and its associated weights.
+The following code snippet will convert the keras model files
+to the freezed .pb tensorflow weight file. The resultant TensorFlow model
+holds both the model architecture and its associated weights.
 """
 
 import tensorflow as tf
+from tensorflow.python.framework import graph_util
+from tensorflow.python.framework import graph_io
 from pathlib import Path
 from absl import app
 from absl import flags
@@ -17,8 +18,7 @@ from absl import logging
 import keras
 from keras import backend as K
 from keras.models import model_from_json
-from tensorflow.python.framework import graph_util
-from tensorflow.python.framework import graph_io
+
 
 K.set_learning_phase(0)
 FLAGS = flags.FLAGS
