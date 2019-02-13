@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Copyright (c) 2018, by the Authors: Amir H. Abdi
+Copyright (c) 2019, by the Authors: Amir H. Abdi
 This script is freely available under the MIT Public License.
 Please see the License file in the root for details.
 
@@ -18,7 +18,7 @@ from absl import flags
 from absl import logging
 import keras
 from keras import backend as K
-from keras.models import model_from_json
+from keras.models import model_from_json, model_from_yaml
 
 K.set_learning_phase(0)
 FLAGS = flags.FLAGS
@@ -26,6 +26,8 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('input_model', None, 'Path to the input model.')
 flags.DEFINE_string('input_model_json', None, 'Path to the input model '
                                               'architecture in json format.')
+flags.DEFINE_string('input_model_yaml', None, 'Path to the input model '
+                                              'architecture in yaml format.')
 flags.DEFINE_string('output_model', None, 'Path where the converted model will '
                                           'be stored.')
 flags.DEFINE_boolean('save_graph_def', False,
@@ -53,7 +55,7 @@ flags.mark_flag_as_required('input_model')
 flags.mark_flag_as_required('output_model')
 
 
-def load_model(input_model_path, input_json_path):
+def load_model(input_model_path, input_json_path=None, input_yaml_path=None):
     if not Path(input_model_path).exists():
         raise FileNotFoundError(
             'Model file `{}` does not exist.'.format(input_model_path))
@@ -76,16 +78,30 @@ def load_model(input_model_path, input_json_path):
             except Exception as err:
                 logging.error("Couldn't load model from json.")
                 raise err
+        elif input_yaml_path:
+            if not Path(input_yaml_path).exists():
+                raise FileNotFoundError(
+                    'Model description yaml file `{}` does not exist.'.format(
+                        input_yaml_path))
+            try:
+                model = model_from_yaml(open(str(input_yaml_path)).read())
+                model.load_weights(input_model_path)
+                return model
+            except Exception as err:
+                logging.error("Couldn't load model from yaml.")
+                raise err
         else:
             logging.error(
                 'Input file specified only holds the weights, and not '
                 'the model definition. Save the model using '
                 'model.save(filename.h5) which will contain the network '
-                'architecture as well as its weights. If the model is '
-                'saved using model.save_weights(filename), the flag '
-                'input_model_json should also be set to the '
-                'architecture which is exported separately in a '
-                'json format. Check the keras documentation for more details '
+                'architecture as well as its weights. '
+                'If the model is saved using the '
+                'model.save_weights(filename) function, either '
+                'input_model_json or input_model_yaml flags should be set to '
+                'to import the network architecture prior to loading the '
+                'weights. \n'
+                'Check the keras documentation for more details '
                 '(https://keras.io/getting-started/faq/)')
             raise wrong_file_err
 
@@ -109,7 +125,7 @@ def main(args):
     else:
         K.set_image_data_format('channels_last')
 
-    model = load_model(FLAGS.input_model, FLAGS.input_model_json)
+    model = load_model(FLAGS.input_model, FLAGS.input_model_json, FLAGS.input_model_yaml)
 
     # TODO(amirabdi): Support networks with multiple inputs
     orig_output_node_names = [node.op.name for node in model.outputs]
