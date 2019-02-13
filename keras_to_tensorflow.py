@@ -18,7 +18,7 @@ from absl import flags
 from absl import logging
 import keras
 from keras import backend as K
-from keras.models import model_from_json
+from keras.models import model_from_json,model_from_yaml
 
 K.set_learning_phase(0)
 FLAGS = flags.FLAGS
@@ -26,6 +26,8 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('input_model', None, 'Path to the input model.')
 flags.DEFINE_string('input_model_json', None, 'Path to the input model '
                                               'architecture in json format.')
+flags.DEFINE_string('input_model_yaml', None, 'Path to the input model '
+                                              'architecture in yaml format.')
 flags.DEFINE_string('output_model', None, 'Path where the converted model will '
                                           'be stored.')
 flags.DEFINE_boolean('save_graph_def', False,
@@ -53,7 +55,7 @@ flags.mark_flag_as_required('input_model')
 flags.mark_flag_as_required('output_model')
 
 
-def load_model(input_model_path, input_json_path):
+def load_model(input_model_path, input_config_path,is_json):
     if not Path(input_model_path).exists():
         raise FileNotFoundError(
             'Model file `{}` does not exist.'.format(input_model_path))
@@ -64,13 +66,17 @@ def load_model(input_model_path, input_json_path):
         logging.error('Input mode file (%s) does not exist.', FLAGS.input_model)
         raise err
     except ValueError as wrong_file_err:
-        if input_json_path:
-            if not Path(input_json_path).exists():
+        if input_config_path:
+            if not Path(input_config_path).exists():
                 raise FileNotFoundError(
                     'Model description json file `{}` does not exist.'.format(
-                        input_json_path))
+                        input_config_path))
             try:
-                model = model_from_json(open(str(input_json_path)).read())
+                if(is_json):
+                    model = model_from_json(open(str(input_config_path)).read())
+                else:
+                    model = model_from_yaml(open(str(input_config_path)).read())
+
                 model.load_weights(input_model_path)
                 return model
             except Exception as err:
@@ -108,9 +114,9 @@ def main(args):
         K.set_image_data_format('channels_first')
     else:
         K.set_image_data_format('channels_last')
-
-    model = load_model(FLAGS.input_model, FLAGS.input_model_json)
-
+    config=FLAGS.input_model_json if FLAGS.input_model_json else FLAGS.input_model_yaml
+    is_json=bool(FLAGS.input_model_json)
+    model = load_model(FLAGS.input_model, config,is_json)
     # TODO(amirabdi): Support networks with multiple inputs
     orig_output_node_names = [node.op.name for node in model.outputs]
     if FLAGS.output_nodes_prefix:
